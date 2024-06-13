@@ -1,0 +1,103 @@
+services:
+  db:
+    image: parallelo3301/cicada-pgsql:0.2
+    environment:
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - internal
+      - core
+
+  backend:
+    image: parallelo3301/cicada-backend:0.2
+    depends_on:
+      - db
+    ports:
+      - "3333:3333"
+    networks:
+      - internal
+
+  frontend:
+    image: parallelo3301/cicada-frontend:0.2
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app/src
+    environment:
+      API_URL: http://nginx:80
+      NEXT_PUBLIC_API_URL: http://localhost:8080
+    networks:
+      - internal
+
+  core:
+    image: parallelo3301/cicada-core:0.2
+    environment:
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      DB_CONNECTION_STRING: "postgres://postgres:postgres@db:5432/cicadabank"
+    ports:
+      - "3070:3000"
+    networks:
+      - internal
+      - core
+
+  monero-wallet-rpc:
+    build:
+      context: .
+      dockerfile: ./infra/docker/monero-wallet-rpc/Dockerfile
+    image: cicada-monero-wallet-rpc
+    ports:
+      - 30405:30405
+    volumes:
+      - ./data/monero/:/monero/wallet
+    command:
+      - "--stagenet"
+      - "--daemon-address=stagenet.community.rino.io:38081"
+      - "--untrusted-daemon"
+      - "--no-initial-sync"
+      - "--disable-rpc-ban"
+      - "--disable-rpc-login"
+      - "--log-level=1"
+      - "--wallet-dir=/monero/wallet"
+      - "--rpc-bind-port=30405"
+      #- "--rpc-login=user:pass"
+    networks:
+      - core
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "8080:80"
+    depends_on:
+      - frontend
+      - backend
+    volumes:
+      - ./infra/docker/nginx/nginx.conf:/etc/nginx/nginx.conf
+    networks:
+      - core
+      - internal
+
+  cli:
+    build:
+      context: .
+      dockerfile: ./infra/docker/cli/Dockerfile
+    image: cicada-cli
+    restart: unless-stopped
+    volumes:
+      - ./infra/scripts:/app/infra/scripts
+    networks:
+      - internal
+
+networks:
+  core:
+    name: cicada_core
+  internal:
+    name: cicada_internal
+
+volumes:
+  backend-data:
+  db-data:
