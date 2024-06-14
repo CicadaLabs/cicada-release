@@ -27,6 +27,9 @@ cd cicada-release
 docker compose up -d cli
 echo "ENCRYPTION_KEY=$(docker compose exec cli /app/infra/scripts/generate-encryption-key.sh)" >> .env
 docker compose up -d
+
+# wait about 30 seconds and run it again
+docker compose up -d
 ```
 
 Wait few minutes so all services are started!
