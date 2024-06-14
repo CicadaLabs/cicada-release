@@ -36,6 +36,8 @@ services:
 
   core:
     image: parallelo3301/cicada-core:0.2
+    depends_on:
+      - frontend
     environment:
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
       DB_CONNECTION_STRING: "postgres://postgres:postgres@db:5432/cicadabank"
