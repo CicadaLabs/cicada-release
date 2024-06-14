@@ -22,8 +22,8 @@ We have tested the stack on Linux (Debian) and macOS.
 3. Run the wallet
 
 ```shell
-git clone git@github.com:CicadaLabs/cicada.git
-cd cicada
+git clone https://github.com/CicadaLabs/cicada-release.git
+cd cicada-release
 docker compose up -d cli
 echo "ENCRYPTION_KEY=$(docker compose exec cli /app/infra/scripts/generate-encryption-key.sh)" >> .env
 docker compose up -d
